@@ -40,9 +40,11 @@ func main() {
 
 	client := NewClient()
 
-	var loc = time.Now().Local().Location()
-	//var t time.Time = time.Now()
-	var t time.Time = time.Date(2022, time.January, 15, 0, 0, 0, 0, loc)
+	// Used for debug specific time range
+	//var loc = time.Now().Local().Location()
+	//var t time.Time = time.Date(2022, time.January, 15, 0, 0, 0, 0, loc)
+	var t time.Time = time.Now()
+	
 	for i := 0; i < 365; i++ {
 		for j := 0; j < 4; j++ {
 
