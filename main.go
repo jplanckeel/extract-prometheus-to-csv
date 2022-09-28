@@ -108,7 +108,6 @@ func printRespCSV(result model.Value) (error) {
 	}
 
 	mapData := make(map[model.Time]model.SampleValue)
-	fmt.Println(len(result.(model.Matrix)[0].Values))
 	for _, val := range result.(model.Matrix)[0].Values {
 		mapData[val.Timestamp] = val.Value
 	}
