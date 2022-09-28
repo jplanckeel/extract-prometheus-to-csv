@@ -12,7 +12,7 @@ import (
 )
 
 type Client struct {
-	v1api  v1.API
+	v1api v1.API
 }
 
 func NewClient() *Client {
@@ -44,7 +44,7 @@ func main() {
 	//var loc = time.Now().Local().Location()
 	//var t time.Time = time.Date(2022, time.January, 15, 0, 0, 0, 0, loc)
 	var t time.Time = time.Now()
-	
+
 	for i := 0; i < 365; i++ {
 		for j := 0; j < 4; j++ {
 
@@ -64,7 +64,6 @@ func main() {
 					os.Exit(1)
 				}
 			}
-
 
 			//need to not full cache vmselect
 			time.Sleep(1 * time.Second)
@@ -98,7 +97,7 @@ func (c *Client) getMetric(t time.Time, ctx context.Context) (model.Value, error
 
 }
 
-func printRespCSV(result model.Value) (error) {
+func printRespCSV(result model.Value) error {
 	var err error
 
 	f, err := os.OpenFile("./metrics_cpu.csv", os.O_APPEND|os.O_WRONLY, 0644)
@@ -120,7 +119,7 @@ func printRespCSV(result model.Value) (error) {
 			return err
 		}
 	}
-	
+
 	//fmt.Println("file appended successfully")
 	err = f.Close()
 	if err != nil {
