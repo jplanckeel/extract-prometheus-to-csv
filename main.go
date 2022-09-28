@@ -13,8 +13,6 @@ import (
 
 type Client struct {
 	v1api  v1.API
-	ctx    context.Context
-	cancel context.CancelFunc
 }
 
 func NewClient() *Client {
@@ -27,8 +25,7 @@ func NewClient() *Client {
 	}
 
 	v1api := v1.NewAPI(client)
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	return &Client{v1api, ctx, cancel}
+	return &Client{v1api}
 }
 
 func main() {
@@ -41,23 +38,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	var t time.Time = time.Now()
-	for i := 0; i < 90; i++ {
+	client := NewClient()
+
+	var loc = time.Now().Local().Location()
+	//var t time.Time = time.Now()
+	var t time.Time = time.Date(2022, time.January, 15, 0, 0, 0, 0, loc)
+	for i := 0; i < 365; i++ {
 		for j := 0; j < 4; j++ {
 
-			client := NewClient()
-			result, err := client.getMetric(t)
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			defer cancel()
+			result, err := client.getMetric(t, ctx)
 			if err != nil {
 				fmt.Printf("Error querying Prometheus: %v\n", err)
 				os.Exit(1)
 			}
 			//fmt.Printf("Result:\n%v\n", result)
-			
-			err = printRespCSV(result)
-			if err != nil {
-				fmt.Printf("Error printing CSV: %v\n", err)
-				os.Exit(1)
+			if result.String() != "" {
+				//fmt.Printf("debug: %v\n", result)
+				err = printRespCSV(result)
+				if err != nil {
+					fmt.Printf("Error printing CSV: %v\n", err)
+					os.Exit(1)
+				}
 			}
+
 
 			//need to not full cache vmselect
 			time.Sleep(1 * time.Second)
@@ -69,25 +74,24 @@ func main() {
 
 }
 
-func (c *Client) getMetric(t time.Time) (model.Value, error) {
+func (c *Client) getMetric(t time.Time, ctx context.Context) (model.Value, error) {
 
 	fmt.Printf("time: %v\n", t)
 	r := v1.Range{
-		Start: t.Add(-time.Hour * 1),
+		Start: t.Add(-time.Hour * 6),
 		End:   t,
 		Step:  time.Minute,
 	}
 
-	result, warnings, err := c.v1api.QueryRange(c.ctx, "sum(irate(node_cpu_seconds_total{mode=~\"user|system\", job=\"node-exporter\"}[1h30s]))", r, v1.WithTimeout(120*time.Second))
+	result, warnings, err := c.v1api.QueryRange(ctx, "sum(irate(node_cpu_seconds_total{mode=~\"user|system\", job=\"node-exporter\"}[1h30s]))", r, v1.WithTimeout(120*time.Second))
 	if err != nil {
-		defer c.cancel()
 		return nil, err
 	}
 	if len(warnings) > 0 {
 		fmt.Printf("Warnings: %v\n", warnings)
 	}
 
-	defer c.cancel()
+	ctx.Done()
 	return result, nil
 
 }
@@ -102,11 +106,10 @@ func printRespCSV(result model.Value) (error) {
 	}
 
 	mapData := make(map[model.Time]model.SampleValue)
-
+	fmt.Println(len(result.(model.Matrix)[0].Values))
 	for _, val := range result.(model.Matrix)[0].Values {
 		mapData[val.Timestamp] = val.Value
 	}
-
 	for t, v := range mapData {
 		// append in file f
 		_, err = fmt.Fprintf(f, "%v;%v\n", t, v)
@@ -115,9 +118,8 @@ func printRespCSV(result model.Value) (error) {
 			f.Close()
 			return err
 		}
-
 	}
-
+	
 	//fmt.Println("file appended successfully")
 	err = f.Close()
 	if err != nil {
