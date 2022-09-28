@@ -40,7 +40,7 @@ func main() {
 
 	client := NewClient()
 
-	// Used for debug specific time range
+	// used for debug specific time range
 	//var loc = time.Now().Local().Location()
 	//var t time.Time = time.Date(2022, time.January, 15, 0, 0, 0, 0, loc)
 	var t time.Time = time.Now()
@@ -55,9 +55,7 @@ func main() {
 				fmt.Printf("Error querying Prometheus: %v\n", err)
 				os.Exit(1)
 			}
-			//fmt.Printf("Result:\n%v\n", result)
 			if result.String() != "" {
-				//fmt.Printf("debug: %v\n", result)
 				err = printRespCSV(result)
 				if err != nil {
 					fmt.Printf("Error printing CSV: %v\n", err)
@@ -67,7 +65,7 @@ func main() {
 
 			//need to not full cache vmselect
 			time.Sleep(1 * time.Second)
-			// remove 1 hour
+			// remove 6 hour
 			t = t.Add(-time.Hour * 6)
 
 		}
@@ -92,6 +90,7 @@ func (c *Client) getMetric(t time.Time, ctx context.Context) (model.Value, error
 		fmt.Printf("Warnings: %v\n", warnings)
 	}
 
+	// close context
 	ctx.Done()
 	return result, nil
 
@@ -120,7 +119,6 @@ func printRespCSV(result model.Value) error {
 		}
 	}
 
-	//fmt.Println("file appended successfully")
 	err = f.Close()
 	if err != nil {
 		fmt.Println(err)
