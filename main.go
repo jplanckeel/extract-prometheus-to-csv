@@ -29,9 +29,7 @@ func NewClient() *Client {
 }
 
 func main() {
-
-	os.Remove("./metrics_cpu.csv")
-
+	
 	_, err := os.Create("./metrics_cpu.csv")
 	if err != nil {
 		fmt.Printf("Error creating file: %v\n", err)
